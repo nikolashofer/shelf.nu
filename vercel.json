@@ -3,7 +3,7 @@
   "outputDirectory": "build/client",
   "installCommand": "npm ci --legacy-peer-deps",
   "framework": null,
-  "regions": ["iad1"],
+  "regions": ["fra1"],
   "routes": [
     {
       "src": "/file-assets/(.*)",
