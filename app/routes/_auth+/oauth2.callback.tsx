@@ -1,9 +1,25 @@
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import {
+  redirect,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "@remix-run/node";
 import {
   createServerClient,
   parseCookieHeader,
   serializeCookieHeader,
 } from "@supabase/ssr";
+import { useLoaderData } from "react-router";
+import { Button } from "~/components/shared/button";
+import { Spinner } from "~/components/shared/spinner";
+import { SUPABASE_ANON_PUBLIC, SUPABASE_URL } from "~/utils/env";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (data?.error) {
+    return [{ title: "Authentication Error" }];
+  }
+
+  return [{ title: "Signing you in…" }];
+};
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const requestUrl = new URL(request.url);
@@ -11,40 +27,64 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const next = requestUrl.searchParams.get("next") || "/";
   const headers = new Headers();
 
-  if (code) {
-    const supabase = createServerClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            // Ensure all cookies have a defined string value
-            return parseCookieHeader(request.headers.get("Cookie") ?? "").map(
-              ({ name, value }) => ({
-                name,
-                value: value ?? "",
-              })
-            );
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              headers.append(
-                "Set-Cookie",
-                serializeCookieHeader(name, value, options)
-              )
-            );
-          },
-        },
-      }
-    );
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      return redirect(next, { headers });
-    }
+  if (!code) {
+    return { error: { message: "Authorization code missing." } };
   }
 
-  // return the user to an error page with instructions
-  return redirect("/auth/auth-code-error", { headers });
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_PUBLIC!, {
+    cookies: {
+      getAll() {
+        return parseCookieHeader(request.headers.get("Cookie") ?? "").map(
+          ({ name, value }) => ({
+            name,
+            value: value ?? "",
+          })
+        );
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          headers.append(
+            "Set-Cookie",
+            serializeCookieHeader(name, value, options)
+          )
+        );
+      },
+    },
+  });
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (!error) {
+    return redirect(next, { headers });
+  }
+
+  return { error: { message: error.message } };
+}
+
+export default function OAuth2Callback() {
+  const data = useLoaderData<typeof loader>();
+  const validationErrors = (data?.error as any)?.validationErrors;
+
+  return (
+    <div className="flex justify-center text-center">
+      {data?.error ? (
+        <div>
+          {validationErrors ? (
+            Object.values(validationErrors).map((error: any) => (
+              <div className="text-sm text-error-500" key={error.message}>
+                {error.message}
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-error-500">{data.error.message}</div>
+          )}
+          <Button to="/" className="mt-4">
+            Back to login
+          </Button>
+        </div>
+      ) : (
+        <Spinner />
+      )}
+    </div>
+  );
 }

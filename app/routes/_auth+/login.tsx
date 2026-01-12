@@ -215,13 +215,13 @@ export default function IndexLoginForm() {
         </div>
       )}
       <Button
-        className="text-center mt-6 w-full"
+        className="mt-6 w-full text-center"
         onClick={async () => {
           console.log("Google sign in");
           await supabaseClient.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: CALLBACK_URL,
+              redirectTo: `${CALLBACK_URL}?next=/assets`,
             },
           });
         }}
