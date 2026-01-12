@@ -1,3 +1,4 @@
+import { CALLBACK_URL } from "~/utils/env";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -212,7 +213,7 @@ export default function IndexLoginForm() {
           await supabaseClient.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: `http://localhost:3000/callback`,
+              redirectTo: CALLBACK_URL,
             },
           });
         }}

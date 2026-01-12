@@ -27,6 +27,7 @@ declare global {
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
+      CALLBACK_URL: string;
       NODE_ENV: "development" | "production" | "test";
       SUPABASE_URL: string;
       SUPABASE_SERVICE_ROLE: string;
@@ -125,6 +126,7 @@ export function initEnv() {
 /**
  * Server env
  */
+export const CALLBACK_URL = getEnv("CALLBACK_URL");
 export const SERVER_URL = getEnv("SERVER_URL");
 export const SUPABASE_SERVICE_ROLE = getEnv("SUPABASE_SERVICE_ROLE");
 export const INVITE_TOKEN_SECRET = getEnv("INVITE_TOKEN_SECRET", {
