@@ -1,3 +1,4 @@
+import { createBrowserClient } from "@supabase/ssr";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -33,7 +34,7 @@ import {
 } from "~/modules/organization/context.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { setCookie } from "~/utils/cookies.server";
-import { CALLBACK_URL } from "~/utils/env";
+import { CALLBACK_URL, SUPABASE_ANON_PUBLIC, SUPABASE_URL } from "~/utils/env";
 import {
   isLikeShelfError,
   isZodValidationError,
@@ -141,6 +142,16 @@ export default function IndexLoginForm() {
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
 
+  const supabaseBrowserClient = createBrowserClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_PUBLIC,
+    {
+      auth: {
+        flowType: "pkce",
+        detectSessionInUrl: false,
+      },
+    }
+  );
   return (
     <div className="w-full max-w-md">
       {acceptedInvite ? (
@@ -217,11 +228,11 @@ export default function IndexLoginForm() {
       <Button
         className="mt-6 w-full text-center"
         onClick={async () => {
-          console.log("Google sign in");
-          await supabaseClient.auth.signInWithOAuth({
+          console.log("Google sign in", CALLBACK_URL);
+          await supabaseBrowserClient.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: `${CALLBACK_URL}?next=/assets`,
+              redirectTo: CALLBACK_URL,
             },
           });
         }}

@@ -11,7 +11,14 @@ import {
 import { useLoaderData } from "react-router";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
+import { mapAuthSession } from "~/modules/auth/mappers.server";
+import {
+  getSelectedOrganisation,
+  setSelectedOrganizationIdCookie,
+} from "~/modules/organization/context.server";
+import { setCookie } from "~/utils/cookies.server";
 import { SUPABASE_ANON_PUBLIC, SUPABASE_URL } from "~/utils/env";
+import { safeRedirect } from "~/utils/http.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (data?.error) {
@@ -21,8 +28,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: "Signing you in…" }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ context, request }: LoaderFunctionArgs) {
   const requestUrl = new URL(request.url);
+  console.log(requestUrl.searchParams);
   const code = requestUrl.searchParams.get("code");
   const next = requestUrl.searchParams.get("next") || "/";
   const headers = new Headers();
@@ -52,7 +60,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  if (data.session) {
+    const authSession = mapAuthSession(data.session);
+
+    const { organizationId } = await getSelectedOrganisation({
+      userId: authSession.userId,
+      request,
+    });
+
+    //@ts-expect-error
+    context.setSession(authSession);
+
+    return redirect(safeRedirect("/assets"), {
+      headers: [
+        setCookie(await setSelectedOrganizationIdCookie(organizationId)),
+      ],
+    });
+  }
 
   if (!error) {
     return redirect(next, { headers });

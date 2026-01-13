@@ -126,7 +126,7 @@ export function initEnv() {
 /**
  * Server env
  */
-export const CALLBACK_URL = getEnv("CALLBACK_URL");
+export const CALLBACK_URL = getEnv("CALLBACK_URL", { isSecret: false });
 export const SERVER_URL = getEnv("SERVER_URL");
 export const SUPABASE_SERVICE_ROLE = getEnv("SUPABASE_SERVICE_ROLE");
 export const INVITE_TOKEN_SECRET = getEnv("INVITE_TOKEN_SECRET", {
@@ -272,6 +272,7 @@ export const CHROME_EXECUTABLE_PATH = getEnv("CHROME_EXECUTABLE_PATH", {
 
 export function getBrowserEnv() {
   return {
+    CALLBACK_URL,
     NODE_ENV,
     SUPABASE_URL,
     SUPABASE_ANON_PUBLIC,
