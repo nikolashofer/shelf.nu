@@ -87,7 +87,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         username: randomUsernameFromEmail(authSession.email),
         firstName: firstName || undefined,
         lastName: lastName || undefined,
-        isSSO: false, // This is OAuth, not SSO
+        isSSO: true,
       });
     }
     // ===== END NEW SECTION =====
